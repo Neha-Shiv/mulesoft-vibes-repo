@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+        http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <munit:config name="customers-api-test-suite.xml"
+        doc:name="MUnit Config"
+        doc:description="MUnit test configuration for the Customer Service API implementation flows" />
+
+    <!-- GET /customers - Success -->
+    <munit:test name="get-customers-success-test"
+        description="Verifies that GET /customers flow returns a non-empty JSON array of Customer objects"
+        doc:name="get-customers-success-test">
+        <munit:execution>
+            <flow-ref name="get:\customers:api-config" doc:name="Call GET /customers flow" />
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::notNullValue()]" message="Payload should not be null" doc:name="Assert payload not null" />
+            <munit-tools:assert-that expression="#[sizeOf(payload)]" is="#[MunitTools::greaterThan(0)]" message="Customer list should contain at least one customer" doc:name="Assert customer list not empty" />
+            <munit-tools:assert-that expression="#[payload[0].id]" is="#[MunitTools::notNullValue()]" message="First customer should have an id field" doc:name="Assert customer has id" />
+            <munit-tools:assert-that expression="#[payload[0].name]" is="#[MunitTools::notNullValue()]" message="First customer should have a name field" doc:name="Assert customer has name" />
+            <munit-tools:assert-that expression="#[payload[0].email]" is="#[MunitTools::notNullValue()]" message="First customer should have an email field" doc:name="Assert customer has email" />
+        </munit:validation>
+    </munit:test>
+
+    <!-- POST /customers - Success -->
+    <munit:test name="post-customers-success-test"
+        description="Verifies that POST /customers flow creates a new customer and returns 201"
+        doc:name="post-customers-success-test">
+        <munit:behavior>
+            <ee:transform doc:name="Set Request Payload">
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ name: "Test Customer", email: "<EMAIL_ADDRESS_6>", phone: "555-000-1234" }]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+        </munit:behavior>
+        <munit:execution>
+            <flow-ref name="post:\customers:application\json:api-config" doc:name="Call POST /customers flow" />
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::notNullValue()]" message="Response payload should not be null" doc:name="Assert payload not null" />
+            <munit-tools:assert-that expression="#[payload.id]" is="#[MunitTools::notNullValue()]" message="Created customer should have a generated id" doc:name="Assert created customer has id" />
+            <munit-tools:assert-that expression="#[payload.name]" is="#[MunitTools::equalTo('Test Customer')]" message="Created customer name should match request" doc:name="Assert customer name matches" />
+            <munit-tools:assert-that expression="#[payload.email]" is="#[MunitTools::equalTo('<EMAIL_ADDRESS_6>')]" message="Created customer email should match request" doc:name="Assert customer email matches" />
+            <munit-tools:assert-that expression="#[vars.httpStatus]" is="#[MunitTools::equalTo(201)]" message="HTTP status should be 201 Created" doc:name="Assert HTTP 201 status" />
+        </munit:validation>
+    </munit:test>
+
+    <!-- GET /customers/{customerId} - Success -->
+    <munit:test name="get-customer-by-id-success-test"
+        description="Verifies that GET /customers/{customerId} flow returns the customer matching the provided ID"
+        doc:name="get-customer-by-id-success-test">
+        <munit:behavior>
+            <ee:transform doc:name="Set URI Parameters">
+                <ee:message>
+                    <ee:set-attributes><![CDATA[%dw 2.0
+output application/java
+---
+{ uriParams: { customerId: "test-customer-123" } }]]></ee:set-attributes>
+                </ee:message>
+            </ee:transform>
+        </munit:behavior>
+        <munit:execution>
+            <flow-ref name="get:\customers\(customerId):api-config" doc:name="Call GET /customers/{customerId} flow" />
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::notNullValue()]" message="Response payload should not be null" doc:name="Assert payload not null" />
+            <munit-tools:assert-that expression="#[payload.id]" is="#[MunitTools::equalTo('test-customer-123')]" message="Response customer id should match" doc:name="Assert customer id matches" />
+            <munit-tools:assert-that expression="#[payload.name]" is="#[MunitTools::notNullValue()]" message="Customer name should not be null" doc:name="Assert customer name not null" />
+            <munit-tools:assert-that expression="#[payload.email]" is="#[MunitTools::notNullValue()]" message="Customer email should not be null" doc:name="Assert customer email not null" />
+        </munit:validation>
+    </munit:test>
+
+    <!-- POST /customers - Missing required fields -->
+    <munit:test name="post-customers-missing-name-test"
+        description="Verifies POST /customers handles a request with missing required name field"
+        doc:name="post-customers-missing-name-test">
+        <munit:behavior>
+            <ee:transform doc:name="Set Invalid Request Payload">
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ email: "<EMAIL_ADDRESS_7>" }]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+        </munit:behavior>
+        <munit:execution>
+            <flow-ref name="post:\customers:application\json:api-config" doc:name="Call POST /customers flow with missing name" />
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::notNullValue()]" message="Response payload should not be null" doc:name="Assert payload not null" />
+            <munit-tools:assert-that expression="#[payload.id]" is="#[MunitTools::notNullValue()]" message="Response should still have a generated id" doc:name="Assert id is generated" />
+            <munit-tools:assert-that expression="#[payload.name]" is="#[MunitTools::nullValue()]" message="Name should be null when not provided" doc:name="Assert name is null" />
+        </munit:validation>
+    </munit:test>
+
+</mule>
