@@ -1,0 +1,7 @@
+{
+  "success": false,
+  "code": 404,
+  "message": "Customer not found",
+  "data": null,
+  "timestamp": "2026-06-02T14:44:38.600+05:30"
+}

@@ -1,0 +1,7 @@
+{
+  "success": false,
+  "code": 409,
+  "message": "Customer with this ID already exists",
+  "data": null,
+  "timestamp": "2026-06-02T14:44:38.600+05:30"
+}
