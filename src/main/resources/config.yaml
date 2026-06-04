@@ -1,0 +1,10 @@
+# Non-sensitive application configuration properties
+# Sensitive values are stored in secure-config.yaml
+
+http:
+  host: "0.0.0.0"
+  port: "8081"
+
+api:
+  basePath: "/api/*"
+  version: "v1"

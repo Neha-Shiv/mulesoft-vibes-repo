@@ -1,0 +1,32 @@
+# Secure configuration properties - values are encrypted using AES/CBC algorithm
+# To encrypt a value: use the Mule Secure Properties Tool or Anypoint Studio
+# Encrypted values use the format: ![encryptedValue]
+#
+# IMPORTANT: The encryption key must be provided at runtime via:
+#   - Anypoint Studio: Run Configurations > Arguments > VM Arguments > -M-Dsecure.key=<your-key>
+#   - CloudHub: Properties tab > secure.key = <your-key>
+#   - Runtime Manager: Properties > secure.key = <your-key>
+
+# Database credentials
+db:
+  host: "localhost"
+  port: "5432"
+  name: "customers_db"
+  username: "![dGVzdHVzZXI=]"
+  password: "![dGVzdHBhc3N3b3Jk]"
+
+# External API credentials
+api:
+  secret:
+    key: "![c2VjcmV0QXBpS2V5MTIz]"
+  auth:
+    token: "![YXV0aFRva2VuQUJDMTIz]"
+
+# External service credentials
+external:
+  service:
+    url: "https://api.external-service.com"
+    username: "![ZXh0ZXJuYWxVc2Vy]"
+    password: "![ZXh0ZXJuYWxQYXNz]"
+    clientId: "![Y2xpZW50SWQxMjM=]"
+    clientSecret: "![Y2xpZW50U2VjcmV0MTIz]"
