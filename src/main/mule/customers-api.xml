@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <flow name="get:\customers:api-config"
+        doc:name="GET /customers"
+        doc:description="Retrieves a list of all customers.">
+        <logger level="INFO"
+            message="#['GET /customers - Retrieving all customers. Correlation ID: ' ++ (correlationId default 'N/A')]"
+            doc:name="Log GET /customers" />
+        <ee:transform doc:name="Build Customers List Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+  { id: "123e4567-e89b-12d3-a456-426614174000", name: "John Doe", email: "john.doe@example.com", phone: "123-456-7890" },
+  { id: "223e4567-e89b-12d3-a456-426614174001", name: "Jane Smith", email: "jane.smith@example.com", phone: "987-654-3210" }
+]]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO"
+            message="#['GET /customers - Returning ' ++ (sizeOf(payload) as String) ++ ' customer(s)']"
+            doc:name="Log Response Count" />
+    </flow>
+
+    <flow name="post:\customers:application\json:api-config"
+        doc:name="POST /customers"
+        doc:description="Creates a new customer record.">
+        <logger level="INFO"
+            message="#['POST /customers - Creating customer with email: ' ++ (payload.email default 'unknown')]"
+            doc:name="Log POST /customers" />
+        <ee:transform doc:name="Build Created Customer Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ id: uuid(), name: payload.name, email: payload.email, phone: payload.phone default null }]]></ee:set-payload>
+            </ee:message>
+            <ee:variables>
+                <ee:set-variable variableName="httpStatus"><![CDATA[201]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO"
+            message="#['POST /customers - Customer created with id: ' ++ (payload.id default 'N/A')]"
+            doc:name="Log Created Customer" />
+    </flow>
+
+    <flow name="get:\customers\(customerId):api-config"
+        doc:name="GET /customers/{customerId}"
+        doc:description="Retrieves a specific customer by their unique ID.">
+        <logger level="INFO"
+            message="#['GET /customers/' ++ attributes.uriParams.customerId ++ ' - Retrieving customer by ID']"
+            doc:name="Log GET /customers/{customerId}" />
+        <ee:transform doc:name="Build Customer By ID Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ id: attributes.uriParams.customerId, name: "John Doe", email: "john.doe@example.com", phone: "123-456-7890" }]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO"
+            message="#['GET /customers/' ++ attributes.uriParams.customerId ++ ' - Customer found']"
+            doc:name="Log Customer Found" />
+    </flow>
+
+</mule>
