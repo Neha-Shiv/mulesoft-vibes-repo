@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <apikit:config
+        name="api-config"
+        raml="api/dummy.raml"
+        outboundHeadersMapName="outboundHeaders"
+        httpStatusVarName="httpStatus"
+        doc:name="APIKit Config"
+        doc:description="APIKit router configuration mapped to the Customer Service API RAML specification" />
+
+    <flow name="api-main"
+        doc:name="api-main"
+        doc:description="Main entry-point flow that receives all HTTP requests on /api/* and routes them via APIKit">
+
+        <http:listener
+            config-ref="HTTP_Listener_config"
+            path="/api/*"
+            doc:name="HTTP Listener /api/*" />
+
+        <apikit:router
+            config-ref="api-config"
+            doc:name="APIKit Router" />
+
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND" doc:name="Not Found">
+                <ee:transform doc:name="404 Not Found Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ success: false, code: 404, message: "Resource not found", data: null, timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"} }]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED" doc:name="Method Not Allowed">
+                <ee:transform doc:name="405 Method Not Allowed Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ success: false, code: 405, message: "Method not allowed", data: null, timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"} }]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[405]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:BAD_REQUEST" doc:name="Bad Request">
+                <ee:transform doc:name="400 Bad Request Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ success: false, code: 400, message: error.description, data: null, timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"} }]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE" doc:name="Unsupported Media Type">
+                <ee:transform doc:name="415 Unsupported Media Type Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ success: false, code: 415, message: "Unsupported media type", data: null, timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"} }]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[415]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="ANY" doc:name="Internal Server Error">
+                <ee:transform doc:name="500 Internal Server Error Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ success: false, code: 500, message: "Internal server error", data: null, timestamp: now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}, error: error.description }]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+</mule>
