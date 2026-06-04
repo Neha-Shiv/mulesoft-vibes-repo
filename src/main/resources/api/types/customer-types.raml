@@ -1,0 +1,18 @@
+#%RAML 1.0 Library
+
+types:
+  Customer:
+    type: object
+    properties:
+      id: string
+      name: string
+      email: string
+      phone?: string
+
+  CustomerCreate:
+    type: object
+    properties:
+      id?: string
+      name: string
+      email: string
+      phone?: string

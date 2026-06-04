@@ -1,0 +1,187 @@
+#%RAML 1.0 Library
+
+types:
+  SuccessResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      code:
+        type: integer
+        example: 200
+      message:
+        type: string
+        example: "Operation successful"
+      data:
+        type: any
+        required: false
+      timestamp:
+        type: datetime
+        example: "2026-06-02T14:44:38.600+05:30"
+
+  ErrorResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      code:
+        type: integer
+        example: 500
+      message:
+        type: string
+        example: "Internal server error"
+      data:
+        type: "null"
+      timestamp:
+        type: datetime
+        example: "2026-06-02T14:44:38.600+05:30"
+      error?:
+        type: string
+      details?:
+        type: any
+
+  ValidationErrorResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      code:
+        type: integer
+        example: 400
+      message:
+        type: string
+        example: "Validation failed"
+      data:
+        type: "null"
+      timestamp:
+        type: datetime
+      details:
+        type: object
+        additionalProperties: true
+
+  NotFoundResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      code:
+        type: integer
+        example: 404
+      message:
+        type: string
+        example: "Resource not found"
+      data:
+        type: "null"
+      timestamp:
+        type: datetime
+
+  ConflictResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      code:
+        type: integer
+        example: 409
+      message:
+        type: string
+        example: "Resource already exists"
+      data:
+        type: "null"
+      timestamp:
+        type: datetime
+
+  CreatedResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      code:
+        type: integer
+        example: 201
+      message:
+        type: string
+        example: "Resource created successfully"
+      data:
+        type: any
+      timestamp:
+        type: datetime
+
+traits:
+  Pageable:
+    queryParameters:
+      page:
+        type: integer
+        required: false
+        default: 1
+        minimum: 1
+        example: 1
+      limit:
+        type: integer
+        required: false
+        default: 10
+        minimum: 1
+        maximum: 100
+        example: 10
+
+  Searchable:
+    queryParameters:
+      search:
+        type: string
+        required: false
+        description: Search query
+        example: "john"
+
+  Sortable:
+    queryParameters:
+      sort:
+        type: string
+        required: false
+        description: Sort field and direction (e.g., name:asc, email:desc)
+        example: "name:asc"
+
+  StandardResponses:
+    responses:
+      500:
+        description: Internal server error
+        body:
+          application/json:
+            type: ErrorResponse
+
+  NotFoundTrait:
+    responses:
+      404:
+        description: Resource not found
+        body:
+          application/json:
+            type: NotFoundResponse
+
+  ConflictTrait:
+    responses:
+      409:
+        description: Resource conflict
+        body:
+          application/json:
+            type: ConflictResponse
+
+  ValidationTrait:
+    responses:
+      400:
+        description: Validation error
+        body:
+          application/json:
+            type: ValidationErrorResponse
+
+  CreatedTrait:
+    responses:
+      201:
+        description: Resource created
+        body:
+          application/json:
+            type: CreatedResponse

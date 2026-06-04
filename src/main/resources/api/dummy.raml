@@ -1,0 +1,50 @@
+#%RAML 1.0
+title: Customer Service API
+version: v1
+baseUri: http://localhost:3000
+mediaType: application/json
+
+uses:
+  types: types/customer-types.raml
+  common: types/common-responses.raml
+
+/customers:
+  get:
+    description: Retrieve all customers
+    is: [common.StandardResponses]
+    responses:
+      200:
+        description: List of customers retrieved successfully
+        body:
+          application/json:
+            type: array
+            items: types.Customer
+            example: !include examples/get-customers-response.json
+  post:
+    description: Create a new customer in the database
+    is: [common.ValidationTrait, common.ConflictTrait, common.StandardResponses]
+    body:
+      application/json:
+        type: types.CustomerCreate
+    responses:
+      201:
+        body:
+          application/json:
+            type: types.Customer
+            example: !include examples/post-customers-response.json
+
+/customers/{customerId}:
+  uriParameters:
+    customerId:
+      type: string
+      required: true
+  get:
+    description: Retrieve a customer by customer ID
+    is: [common.NotFoundTrait, common.StandardResponses]
+    responses:
+      200:
+        description: Customer retrieved successfully
+        body:
+          application/json:
+            type: types.Customer
+            example: !include examples/get-customer-by-id-response.json
